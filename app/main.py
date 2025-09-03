@@ -9,7 +9,7 @@ import time
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
-
+from . import schemas
 
 # Create databse for postgres
 models.Base.metadata.create_all(bind=engine)
@@ -65,11 +65,11 @@ def get_posts(db: Session = Depends(get_db)):
     # cur.execute("""SELECT * FROM posts;""")
     # posts = cur.fetchall()
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     ## Run Regular SQL Query to Insert data into the db
     # cur.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING* """, 
     #             (post.title, post.content, post.published))
@@ -82,7 +82,7 @@ def create_posts(post: Post, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_post)
 
-    return  {"data": new_post}
+    return new_post
 
 
 @app.get("/posts/latest")
@@ -106,7 +106,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
     
-    return {"post details": post}
+    return post
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -126,7 +126,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # Using regular querys to do updates on db
     # cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
     #             (post.title, post.content, post.published, str(id)))
@@ -142,4 +142,4 @@ def update_post(id: int, post: Post, db: Session = Depends(get_db)):
     
     post_query.update(**post.model_dump(),synchronize_session=False)
     db.commit()
-    return {"data": updated_post}
+    return updated_post
