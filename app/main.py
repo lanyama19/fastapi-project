@@ -58,13 +58,6 @@ async def root():
     return {"message": "Welcome to my new api"}
 
 
-@app.get("/sqlalchemy")
-def test_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    print(posts)
-    return {"data": "successfully"}
-
-
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     ## Run Regular SQL Query to fetch data from the db
@@ -147,9 +140,6 @@ def update_post(id: int, post: Post, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} does not exist")
     
-    # SQLAlchemy Query.update expects a mapping, not kwargs
-    post_query.update(post.model_dump(), synchronize_session=False)
+    post_query.update(**post.model_dump(),synchronize_session=False)
     db.commit()
-    # fetch the latest state after update
-    updated_post = post_query.first()
     return {"data": updated_post}
