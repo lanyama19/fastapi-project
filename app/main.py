@@ -91,7 +91,7 @@ def get_latest_post():
     return {"details": post}
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.Post)
 def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     # # Regular SQL query for getting one entry
     # cur.execute("""SELECT * FROM posts WHERE id = %s""",(str(id),))
@@ -125,7 +125,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT) # 204 not send any message back
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.Post)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # Using regular querys to do updates on db
     # cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
@@ -140,6 +140,6 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} does not exist")
     
-    post_query.update(**post.model_dump(),synchronize_session=False)
+    post_query.update(post.model_dump(), synchronize_session=False)
     db.commit()
-    return updated_post
+    return post_query.first()
