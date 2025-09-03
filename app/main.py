@@ -8,27 +8,19 @@ from psycopg.rows import dict_row
 import time
 from sqlalchemy.orm import Session
 from . import models
-from .database import engine, SessionLocal
+from .database import engine, get_db
 
 
+# Create databse for postgres
 models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
-
-
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None # Optional value
 
 
 while True:
@@ -68,28 +60,35 @@ async def root():
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    return {"status":"success"}
+    posts = db.query(models.Post).all()
+    print(posts)
+    return {"data": "successfully"}
 
 
 @app.get("/posts")
-def get_posts():
-    cur.execute("""SELECT * FROM posts;""")
-    posts = cur.fetchall()
-    # print(posts)
+def get_posts(db: Session = Depends(get_db)):
+    ## Run Regular SQL Query to fetch data from the db
+    ## Please remove the dependency above before running the code before 
+    # cur.execute("""SELECT * FROM posts;""")
+    # posts = cur.fetchall()
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    # # print(post.rating)
-    # # print(post.model_dump())  # .dict() method is deprecated
-    # post_dict = post.model_dump()
-    # post_dict['id'] = randrange(0, 100000000)
-    # my_posts.append(post_dict)
-    cur.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING* """, 
-                (post.title, post.content, post.published))
-    new_post = cur.fetchone()
-    conn.commit() # push and stage changes
+def create_posts(post: Post, db: Session = Depends(get_db)):
+    ## Run Regular SQL Query to Insert data into the db
+    # cur.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING* """, 
+    #             (post.title, post.content, post.published))
+    # new_post = cur.fetchone()
+    # conn.commit() # push and stage changes
+    ## With the ORM:
+    # new_post = models.Post(title = post.title, content = post.content, published = post.published)  # Bad practice for having many fields
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
     return  {"data": new_post}
 
 
@@ -100,9 +99,12 @@ def get_latest_post():
 
 
 @app.get("/posts/{id}")
-def get_post(id: int, response: Response):
-    cur.execute("""SELECT * FROM posts WHERE id = %s""",(str(id),))
-    post = cur.fetchone()
+def get_post(id: int, response: Response, db: Session = Depends(get_db)):
+    # # Regular SQL query for getting one entry
+    # cur.execute("""SELECT * FROM posts WHERE id = %s""",(str(id),))
+    # post = cur.fetchone()
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+
     if not post:
         # --------- handling no-exiting post ids: method 1-----------
         # response.status_code = status.HTTP_404_NOT_FOUND
@@ -110,31 +112,44 @@ def get_post(id: int, response: Response):
         # --------- handling no-exiting post ids: method 2-----------
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
+    
     return {"post details": post}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    cur.execute("""DELETE FROM posts WHERE id = %s returning* """,(str(id),))
-    deleted_post = cur.fetchone()
-    conn.commit()
-    
-    if deleted_post == None:
+def delete_post(id: int, db: Session = Depends(get_db)):
+    # cur.execute("""DELETE FROM posts WHERE id = %s returning* """,(str(id),))
+    # deleted_post = cur.fetchone()
+    # conn.commit()
+    post = db.query(models.Post).filter(models.Post.id == id)
+
+    if post.first() == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} does not exist")
     
+    post.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT) # 204 not send any message back
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
-                (post.title, post.content, post.published, str(id)))
-    updated_post = cur.fetchone()
-    conn.commit()
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    # # Using regular querys to do updates on db
+    # cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
+    #             (post.title, post.content, post.published, str(id)))
+    # updated_post = cur.fetchone()
+    # conn.commit()
+
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    updated_post = post_query.first()
 
     if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} does not exist")
     
+    # SQLAlchemy Query.update expects a mapping, not kwargs
+    post_query.update(post.model_dump(), synchronize_session=False)
+    db.commit()
+    # fetch the latest state after update
+    updated_post = post_query.first()
     return {"data": updated_post}
