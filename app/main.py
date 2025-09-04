@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg
 from psycopg.rows import dict_row
@@ -58,7 +58,7 @@ async def root():
     return {"message": "Welcome to my new api"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     ## Run Regular SQL Query to fetch data from the db
     ## Please remove the dependency above before running the code before 
