@@ -5,10 +5,12 @@ from ..database import get_db
 from typing import List
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts"
+)
 
 
-@router.get("/posts", response_model=List[schemas.Post])
+@router.get("/", response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     ## Run Regular SQL Query to fetch data from the db
     ## Please remove the dependency above before running the code before 
@@ -18,7 +20,7 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     ## Run Regular SQL Query to Insert data into the db
     # cur.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING* """, 
@@ -35,7 +37,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts/{id}", response_model=schemas.Post)
+@router.get("/{id}", response_model=schemas.Post)
 def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     # # Regular SQL query for getting one entry
     # cur.execute("""SELECT * FROM posts WHERE id = %s""",(str(id),))
@@ -53,7 +55,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     return post
 
 
-@router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     # cur.execute("""DELETE FROM posts WHERE id = %s returning* """,(str(id),))
     # deleted_post = cur.fetchone()
@@ -69,7 +71,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT) # 204 not send any message back
 
 
-@router.put("/posts/{id}", response_model=schemas.Post)
+@router.put("/{id}", response_model=schemas.Post)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # Using regular querys to do updates on db
     # cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
