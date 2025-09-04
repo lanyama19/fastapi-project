@@ -65,6 +65,8 @@ Request/response payloads follow the Pydantic models in `app/schemas.py`.
   - Unix/macOS: `python -m venv .venv && source .venv/bin/activate`
 
 2) Install dependencies
+- Using pinned versions: `pip install -r requirements.txt`
+- Or minimal manual install:
 ```
 pip install fastapi uvicorn sqlalchemy psycopg passlib[bcrypt]
 ```
