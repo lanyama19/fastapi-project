@@ -58,7 +58,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(id: int, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # cur.execute("""DELETE FROM posts WHERE id = %s returning* """,(str(id),))
     # deleted_post = cur.fetchone()
     # conn.commit()
@@ -74,7 +74,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=schemas.Post)
-def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # # Using regular querys to do updates on db
     # cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING* """, 
     #             (post.title, post.content, post.published, str(id)))
