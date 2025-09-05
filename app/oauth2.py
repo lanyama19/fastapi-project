@@ -29,20 +29,23 @@ def create_access_token(data: dict):
 def verify_access_token(token: str, credentials_exception):
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        id: str = payload.get("user_id")
+        # python-jose expects a list for "algorithms"
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        raw_id = payload.get("user_id")
 
-        if id is None:
+        if raw_id is None:
             raise credentials_exception
-        token_data = schemas.TokenData(id = id)
+        # Coerce to int to match TokenData schema
+        token_data = schemas.TokenData(id=int(raw_id))
     except JWTError:
         raise credentials_exception
     
     return token_data
     
 
-def get_current_user(token: str = Depends(oath2_schema)):
+def get_current_user(token: str = Depends(oath2_schema)) -> int:
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                           detail=f"Could not validate credentials", headers={"WWW-Authenticate":"Bearer"})
     
-    return verify_access_token(token, credentials_exception)
+    token_data = verify_access_token(token, credentials_exception)
+    return int(token_data.id)
