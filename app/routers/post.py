@@ -12,12 +12,10 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
-    ## Run Regular SQL Query to fetch data from the db
-    ## Please remove the dependency above before running the code before 
-    # cur.execute("""SELECT * FROM posts;""")
-    # posts = cur.fetchall()
-    posts = db.query(models.Post).all()
+def get_posts(db: Session = Depends(get_db),
+              current_user: int = Depends(oauth2.get_current_user)):
+    # Only return posts that are published; requires authenticated user
+    posts = db.query(models.Post).filter(models.Post.published == True).all()
     return posts
 
 
