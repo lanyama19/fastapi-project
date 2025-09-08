@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from typing import Optional
+# from pydantic.types import conint
+from typing import Literal
+
 
 class PostBase(BaseModel):
     title: str
@@ -44,3 +47,8 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[int]  = None
+
+
+class Vote(BaseModel):
+    post_id: int
+    dir: Literal[0, 1] # Only 1 or 0 is allowed for direction of the vote
