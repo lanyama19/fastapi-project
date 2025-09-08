@@ -30,6 +30,12 @@ class Post(PostBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PostWithVotes(BaseModel):
+    post: Post
+    votes: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
