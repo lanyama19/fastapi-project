@@ -1,118 +1,100 @@
 # FastAPI Project
 
-A simple CRUD API built with FastAPI, SQLAlchemy, and Pydantic (v2), backed by PostgreSQL. It exposes posts and users endpoints, with password hashing for users.
+FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. Posts endpoints now return vote counts via a LEFT JOIN + GROUP BY.
 
 ## Tech Stack
-- FastAPI: HTTP API and routing with `APIRouter`.
-- Pydantic v2: Request/response models and validation.
-- SQLAlchemy ORM: Database models and DB interactions.
-- Psycopg (psycopg3): PostgreSQL driver (plus a small direct check in `main.py`).
-- Passlib + Bcrypt: Password hashing for users.
-- PostgreSQL: Relational database.
-- Uvicorn: ASGI server for local development.
+- FastAPI: routing with `APIRouter` and dependency injection.
+- Pydantic v2: request/response models and validation.
+- SQLAlchemy ORM: models and DB access; `func.count` for aggregations.
+- Psycopg (psycopg3): PostgreSQL driver.
+- Passlib + Bcrypt: password hashing.
+- Alembic: migrations (installed; optional setup below).
+- Uvicorn: ASGI server for development.
 
 ## Features
-- Posts CRUD: create, list, get by id, update, delete.
-- Users: create user with hashed password, get user by id.
-- Router-based structure with prefixes: `/posts` and `/users`.
-- Strong typing and validation via Pydantic schemas.
-- Demo endpoint for the latest in-memory post.
+- Auth: OAuth2 password flow + JWT（登录获取 token）
+- Users: register and fetch user
+- Posts: CRUD + search/pagination; only published posts listed
+- Votes: like/unlike via composite key（user_id, post_id）
+- Aggregation: `GET /posts` 与 `GET /posts/{id}` 返回投票数（`votes`）
 
 ## Project Structure
 ```
 app/
-  __init__.py         # Package marker
-  main.py             # FastAPI app, includes routers, table creation, demo
-  models.py           # SQLAlchemy ORM models (Post, User)
-  database.py         # Engine/session setup and `get_db` dependency
-  schemas.py          # Pydantic schemas for requests/responses
-  utils.py            # Password hashing via Passlib (bcrypt)
+  __init__.py
+  main.py
+  models.py
+  database.py
+  schemas.py
+  utils.py
+  config.py
   routers/
-    post.py           # Posts endpoints (CRUD)
-    user.py           # Users endpoints (create, get)
-README.md             # This file
+    post.py
+    user.py
+    auth.py
+    vote.py
+alembic/
+  env.py
+  script.py.mako
+  versions/
+README.md
+requirements.txt
+alembic.ini
 ```
 
-## What Each Python File Does
-- `app/main.py`: Creates the FastAPI app, includes `routers.post` and `routers.user`, defines `/` and demo `/posts/latest`, and creates tables via `models.Base.metadata.create_all(bind=engine)`.
-- `app/routers/post.py`: Posts CRUD implemented with SQLAlchemy session dependency.
-- `app/routers/user.py`: User creation with hashed password and fetch-by-id.
-- `app/utils.py`: Password hashing using Passlib’s `CryptContext` with bcrypt.
-- `app/models.py`: ORM models for `posts` and `users` with timestamps/defaults.
-- `app/database.py`: SQLAlchemy engine, `SessionLocal`, `Base`, and the `get_db` dependency.
-- `app/schemas.py`: Pydantic models for posts and users (e.g., `PostCreate`, `Post`, `UserCreate`, `UserOut`).
+## Data Models & Responses
+- PostWithVotes: `{ "post": Post, "votes": int }` 用于帖子列表与详情响应。
 
-## API Endpoints (Summary)
-- GET `/` — Health/welcome message
-- Posts
-  - GET `/posts` — List posts
-  - POST `/posts` — Create a post
-  - GET `/posts/{id}` — Get a post by id
-  - PUT `/posts/{id}` — Update a post by id
-  - DELETE `/posts/{id}` — Delete a post by id
-  - GET `/posts/latest` — Demo endpoint returning the last in-memory post
+## Endpoints（摘要）
+- Auth
+  - POST `/login` → 返回 `access_token`
 - Users
-  - POST `/users` — Create user (password hashed)
-  - GET `/users/{id}` — Get user by id
+  - POST `/users` → 注册
+  - GET `/users/{id}` → 查询
+- Posts（需认证）
+  - GET `/posts` → 返回 `List[PostWithVotes]`
+  - GET `/posts/{id}` → 返回 `PostWithVotes`
+  - POST `/posts` → 创建帖子
+  - PUT `/posts/{id}` → 更新帖子
+  - DELETE `/posts/{id}` → 删除帖子
+- Votes（需认证）
+  - POST `/vote` → `{"post_id": int, "dir": 1|0}`（1=投票，0=取消）
 
-Request/response payloads follow the Pydantic models in `app/schemas.py`.
-
-## Local Setup
+## Setup
 1) Python env
-- Python 3.10+ recommended.
-- Create and activate a virtualenv (optional):
-  - Windows (PowerShell): `python -m venv .venv; .venv\Scripts\Activate.ps1`
-  - Unix/macOS: `python -m venv .venv && source .venv/bin/activate`
+- Python 3.10+
+- Windows: `python -m venv .venv; .venv\Scripts\Activate.ps1`
+- Unix/macOS: `python -m venv .venv && source .venv/bin/activate`
 
-2) Install dependencies
-- Using pinned versions: `pip install -r requirements.txt`
-- Or minimal manual install:
+2) Install deps
+- `pip install -r requirements.txt`
+
+Or minimal manual install:
 ```
-pip install fastapi uvicorn sqlalchemy psycopg passlib[bcrypt]
+pip install fastapi uvicorn sqlalchemy psycopg passlib[bcrypt] python-jose[cryptography] email-validator pydantic-settings alembic
 ```
 
-3) Configure database
-- Ensure a PostgreSQL instance is running and a database named `fastapi` exists.
-- Default SQLAlchemy URL in `app/database.py`:
-  `postgresql+psycopg://postgres:123@localhost/fastapi`
-- Update it if your credentials or DB name differ.
+3) Configure DB
+- 使用环境变量（`.env`）配置数据库连接（见 `app/config.py`）。
+- SQLAlchemy 连接格式：`postgresql+psycopg://user:pass@host:port/dbname`
 
-4) Create tables (auto)
-- On app start, `models.Base.metadata.create_all(bind=engine)` creates missing tables.
-
-## Run
-- Start the server (auto-reload in dev):
+4) Run
 ```
 uvicorn app.main:app --reload
 ```
-- Open docs: http://127.0.0.1:8000/docs
+Docs: http://127.0.0.1:8000/docs
 
-## Example Payloads
-- Create/Update post body:
+## Alembic（可选）
+初始化并生成迁移：
 ```
-{
-  "title": "Hello",
-  "content": "World",
-  "published": true
-}
-```
-- Create user body:
-```
-{
-  "email": "user@example.com",
-  "password": "supersecret"
-}
+alembic init alembic
+# 配置 alembic.ini 与 env.py 指向 SQLAlchemy URL 和 Base
+alembic revision --autogenerate -m "init"
+alembic upgrade head
 ```
 
 ## Recent Changes
-- Split routes into `app/routers/{post,user}.py` with `APIRouter` prefixes.
-- Added `User` model and user endpoints.
-- Added password hashing via Passlib (bcrypt) in `app/utils.py`.
-- Consolidated CRUD on SQLAlchemy ORM and fixed update behavior.
-
-## Notes
-- Uses SQLAlchemy ORM for CRUD; `main.py` also contains a minimal direct psycopg connection for connectivity check.
-- For PATCH-like partial updates, adapt the update endpoint to use `exclude_unset=True` with Pydantic.
+- posts: include vote counts; fix vote dependency
 
 ## License
-MIT (or your preferred license).
+MIT (or your preferred license)
