@@ -19,6 +19,16 @@ def get_posts(db: Session = Depends(get_db),
               limit: int = 10,
               skip: int = 0,
               search: Optional[str] = ""):
+    
+    # The raw query for the following code:
+    # SELECT posts.id, 
+    #        posts.title, 
+    #        COUNT(votes.user_id)
+    # FROM posts
+    # LEFT JOIN votes
+    #     ON posts.id = votes.post_id
+    # GROUP BY posts.id;
+
     rows = (
         db.query(
             models.Post,
