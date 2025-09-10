@@ -84,24 +84,7 @@ uvicorn app.main:app --reload
 ```
 Docs: http://127.0.0.1:8000/docs
 
-## Alembic (optional)
-Initialize and run migrations:
-```
-alembic init alembic
-# configure alembic.ini and alembic/env.py to use your SQLAlchemy URL and models Base
-alembic revision --autogenerate -m "init"
-alembic upgrade head
-```
-
-## Recent Changes
-- posts: include vote counts; fix vote dependency
-- docs: add alembic and install instructions
-- docs: polish README content
-
-## License
-MIT (or your preferred license)
-
-## Alembic: Usage Recommendations (English)
+## Alembic: Usage Recommendations
 
 Configuration
 
@@ -136,3 +119,11 @@ Tips
 - One head: keep a single linear history; avoid parallel heads by syncing with main before creating revisions.
 - Deterministic migrations: prefer explicit server defaults and non-null backfills to keep online upgrades safe.
 - Don't edit applied revisions: instead, add a new corrective migration.
+
+## Recent Changes
+- posts: include vote counts; fix vote dependency
+- docs: add alembic and install instructions
+- docs: polish README content
+
+## License
+MIT (or your preferred license)
