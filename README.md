@@ -100,3 +100,39 @@ alembic upgrade head
 
 ## License
 MIT (or your preferred license)
+
+## Alembic: Usage Recommendations (English)
+
+Configuration
+
+- Set DB URL: in `alembic.ini`, either fill `sqlalchemy.url` or leave it blank and provide `DATABASE_URL` via env; both are supported by Alembic.
+- Bind models: in `alembic/env.py`, import your metadata and set `target_metadata` to it, e.g. `from app.models import Base; target_metadata = Base.metadata`.
+- Autogenerate safety: always review generated diffs in `alembic/versions/*.py` before upgrading; avoid destructive changes in production without backups.
+
+Basic CLI (<= 6 commands)
+
+```
+# 1) Initialize (only if starting fresh)
+alembic init alembic
+
+# 2) Create a migration from model changes
+alembic revision --autogenerate -m "describe change"
+
+# 3) Apply migrations to latest
+alembic upgrade head
+
+# 4) Roll back last migration
+alembic downgrade -1
+
+# 5) Show migration history
+alembic history
+
+# 6) Show current DB revision
+alembic current
+```
+
+Tips
+
+- One head: keep a single linear history; avoid parallel heads by syncing with main before creating revisions.
+- Deterministic migrations: prefer explicit server defaults and non-null backfills to keep online upgrades safe.
+- Don't edit applied revisions: instead, add a new corrective migration.
