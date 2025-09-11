@@ -10,6 +10,7 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 - Passlib + Bcrypt: password hashing
 - Alembic: database migrations
 - Uvicorn: ASGI server for development
+- Render: backend deployment (Web Service)
 
 ## Features
 - Auth: OAuth2 password flow + JWT (login returns an access token)
@@ -83,6 +84,26 @@ pip install fastapi uvicorn sqlalchemy psycopg passlib[bcrypt] python-jose[crypt
 uvicorn app.main:app --reload
 ```
 Docs: http://127.0.0.1:8000/docs
+
+## Deploy on Render (Backend)
+
+1) Create service
+- Push code to GitHub. In Render, create a New Web Service and connect this repo.
+
+2) Basic settings
+- Environment: `Python`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+3) Environment variables
+- `DATABASE_URL`: PostgreSQL connection string (provision a Render PostgreSQL instance and use its Internal Database URL).
+- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`: values consumed by `app/config.py`.
+
+4) Migrations
+- After the first deploy, run `alembic upgrade head` from the Render Shell (or set it as a post-deploy command) to create tables.
+
+5) Verify
+- Open the service URL and check `/docs` for the interactive API.
 
 ## Alembic: Usage Recommendations
 
