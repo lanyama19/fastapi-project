@@ -5,13 +5,13 @@ from .routers import post, user, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
 
 
-# Create databse for postgres
-models.Base.metadata.create_all(bind=engine)
+# # Create databse for postgres
+# models.Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()
 
-origins = ["https://www.google.com"]
+origins = ["*"] # allow for every single domain
 
 app.add_middleware(
     CORSMiddleware,
