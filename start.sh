@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-echo "[start] applying Alembic migrations..."
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "[start] applying Alembic migrations (using alembic.ini)..."
 
 # Retry alembic upgrade to tolerate DB cold starts on free instances
 RETRIES=${ALEMBIC_RETRIES:-10}
 DELAY=${ALEMBIC_RETRY_DELAY:-3}
 
 attempt=1
-until alembic upgrade head; do
+until alembic -c alembic.ini upgrade head; do
   if [[ $attempt -ge $RETRIES ]]; then
     echo "[start] alembic upgrade failed after $RETRIES attempts. Exiting." >&2
     exit 1
@@ -20,4 +23,3 @@ done
 
 echo "[start] migrations applied. Launching app..."
 exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
-
