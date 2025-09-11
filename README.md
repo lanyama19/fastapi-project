@@ -93,17 +93,24 @@ Docs: http://127.0.0.1:8000/docs
 2) Basic settings
 - Environment: `Python`
 - Build Command: `pip install -r requirements.txt`
-- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Start Command: `bash ./start.sh`
 
-3) Environment variables
-- `DATABASE_URL`: PostgreSQL connection string (provision a Render PostgreSQL instance and use its Internal Database URL).
-- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`: values consumed by `app/config.py`.
+3) Environment variables (required)
+- `database_hostname`, `database_port`, `database_name`, `database_username`, `database_password`
+- `secret_key`, `algorithm`, `access_token_expire_minutes`
+  These are read by `app/config.py` (Pydantic Settings). UPPERCASE variants also work.
 
 4) Migrations
-- After the first deploy, run `alembic upgrade head` from the Render Shell (or set it as a post-deploy command) to create tables.
+- Automatically handled by `start.sh` via `alembic upgrade head` with retries (useful for free instances).
+- Optional: run manually from Render Shell if needed: `alembic upgrade head`.
 
 5) Verify
 - Open the service URL and check `/docs` for the interactive API.
+
+Notes
+- Free instance cold starts can delay DB availability. Tune retries via:
+  - `ALEMBIC_RETRIES` (default `10`)
+  - `ALEMBIC_RETRY_DELAY` seconds (default `3`)
 
 ## Alembic: Usage Recommendations
 
