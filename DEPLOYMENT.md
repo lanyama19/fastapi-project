@@ -216,3 +216,103 @@ From outside:
 http://<VM_EXTERNAL_IP>:8000/docs
 ```
 
+---
+
+## 13) Install Nginx
+
+Install and verify Nginx:
+```bash
+sudo apt update
+sudo apt install nginx -y
+systemctl status nginx
+```
+
+Ensure DNS A records for your domain point to the VM external IP, and allow ports 80/443 in GCP firewall.
+
+Open HTTP/HTTPS if needed:
+```bash
+gcloud compute firewall-rules create allow-http --allow=tcp:80 --source-ranges=0.0.0.0/0 --network=default
+gcloud compute firewall-rules create allow-https --allow=tcp:443 --source-ranges=0.0.0.0/0 --network=default
+```
+
+---
+
+## 14) Configure Nginx Reverse Proxy
+
+Create a site config that proxies to the app on port 8000:
+```bash
+sudo nano /etc/nginx/sites-available/fastapi
+```
+
+Example config (replace `example.com` with your domain):
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name example.com www.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable and reload:
+```bash
+sudo ln -s /etc/nginx/sites-available/fastapi /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+Visit `http://example.com` to confirm the app is reachable via Nginx.
+
+---
+
+## 15) Install Certbot (Let’s Encrypt)
+
+Install Certbot via snap and link the binary:
+```bash
+# if you are inside a Python venv, exit it first
+deactivate 2>/dev/null || true
+
+sudo apt install snapd -y
+sudo snap install core; sudo snap refresh core
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+```
+
+---
+
+## 16) Obtain and Configure SSL Certificates
+
+Run the interactive Certbot flow for Nginx (replace domains):
+```bash
+sudo certbot --nginx -d example.com -d www.example.com
+```
+
+Certbot updates the Nginx config and enables HTTPS on port 443.
+
+---
+
+## 17) Test HTTPS
+
+Open:
+```
+https://example.com
+```
+
+Your FastAPI app should now be served securely via HTTPS.
+
+---
+
+## 18) Auto Renewal
+
+Let’s Encrypt certificates renew automatically via systemd timers. Test renewal:
+```bash
+sudo certbot renew --dry-run
+```
