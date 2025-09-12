@@ -155,3 +155,7 @@ Tips
 
 ## License
 MIT (or your preferred license)
+
+## Ubuntu VM Deployment
+- For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see `DEPLOYMENT.md`:
+  - ./DEPLOYMENT.md
