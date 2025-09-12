@@ -3,12 +3,12 @@ Description=demo fastapi application
 After=network.target
 
 [Service]
-User=sanjeev
-Group=sanjeev
-WorkingDirectory=/home/sanjeev/app/src/
-Environment="PATH=/home/sanjeev/app/venv/bin"
-EnvironmentFile=/home/sanjeev/.env
-ExecStart=/home/sanjeev/app/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+User=frank2025
+Group=frank2025
+WorkingDirectory=/home/frank2025/app/src/
+Environment="PATH=/home/frank2025/app/venv/bin"
+EnvironmentFile=/home/frank2025/.env
+ExecStart=/home/frank2025/app/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
 
 [Install]
 WantedBy=multi-user.target
