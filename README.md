@@ -4,13 +4,15 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 
 ## Tech Stack
 - FastAPI: routing with `APIRouter` and dependency injection
+- Starlette: underlying ASGI toolkit
 - Pydantic v2: request/response models and validation
-- SQLAlchemy ORM: models and DB access; `func.count` for aggregations
-- Psycopg (psycopg3): PostgreSQL driver
+- SQLAlchemy 2.x ORM: models and DB access; `func.count` for aggregations
+- Psycopg 3: PostgreSQL driver
 - Passlib + Bcrypt: password hashing
-- Alembic: database migrations
-- Uvicorn: ASGI server for development
-- Render: backend deployment (Web Service)
+- Alembic: database migrations (auto-run on container start)
+- Uvicorn: ASGI server
+- Docker & Docker Compose: local dev and packaging
+- Render: optional deployment target (Web Service)
 
 ## Features
 - Auth: OAuth2 password flow + JWT (login returns an access token)
@@ -18,6 +20,9 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 - Posts: CRUD + search/pagination; only published posts listed
 - Votes: like/unlike via composite key (user_id, post_id)
 - Aggregation: `GET /posts` and `GET /posts/{id}` include a `votes` count
+- CORS: permissive defaults for easy local testing
+- Migrations: Alembic runs automatically at container start to ensure tables exist
+- Dockerized dev: `docker compose up --build` to start API + Postgres
 
 ## Project Structure
 ```
@@ -149,16 +154,18 @@ Tips
 - Don't edit applied revisions: instead, add a new corrective migration.
 
 ## Recent Changes
-- posts: include vote counts; fix vote dependency
-- docs: add alembic and install instructions
-- docs: polish README content
+- docker: run Alembic on container start before launching Uvicorn
+- docker-compose: load `.env` correctly and add `depends_on: [postgres]`
+- docs: add Docker setup/commands and Docker Hub push section
+- posts: include vote counts; fix vote dependency in queries
+- docs: improve Ubuntu VM link rendering
 
 ## License
 MIT (or your preferred license)
 
 ## Ubuntu VM Deployment
-- For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see `DEPLOYMENT.md`:
-  - ./DEPLOYMENT.md
+- For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see:
+  - [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## Docker: Setup, Commands, and Push
 
