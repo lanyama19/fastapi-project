@@ -159,3 +159,95 @@ MIT (or your preferred license)
 ## Ubuntu VM Deployment
 - For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see `DEPLOYMENT.md`:
   - ./DEPLOYMENT.md
+
+## Docker: Setup, Commands, and Push
+
+Prerequisites
+
+- Docker Desktop 4.x+
+- Docker Compose v2 (comes with Docker Desktop; use `docker compose` not `docker-compose`)
+
+Configuration
+
+- Environment file: copy `.env` and set your values. When using Compose, set `DATABASE_HOSTNAME=postgres` so the API container can reach the Postgres service by name.
+- Compose file: `docker-compose.yml` defines two services:
+  - `api`: builds this repo and exposes `8000`.
+  - `postgres`: official `postgres:17` with a persistent volume.
+- Migrations: the container entrypoint runs `alembic -c alembic.ini upgrade head` before starting Uvicorn, so tables are created/updated automatically.
+
+Build and Run
+
+```
+# From the repo root
+docker compose up --build
+
+# Run in background
+docker compose up -d --build
+
+# Stop and remove containers (keep volume)
+docker compose down
+
+# Stop and also remove the postgres volume (clears DB data)
+docker compose down -v
+```
+
+Verify
+
+- Open docs: http://localhost:8000/docs
+- Example request (create user):
+```
+curl -X POST http://localhost:8000/users/ \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"secret"}'
+```
+
+Useful Commands
+
+```
+# Show service status
+docker compose ps
+
+# Tail API logs
+docker compose logs -f api
+
+# Exec into running API container (shell)
+docker exec -it fastapi-project-api-1 sh
+
+# Run Alembic inside API container (if needed)
+docker exec -it fastapi-project-api-1 alembic -c alembic.ini upgrade head
+```
+
+Push Image to Docker Hub
+
+Option A — single-step build and push with your tag:
+```
+# Log in (once)
+docker login
+
+# Build image tagged for Docker Hub
+docker build -t <DOCKERHUB_USER>/fastapi-project:latest .
+
+# Push
+docker push <DOCKERHUB_USER>/fastapi-project:latest
+```
+
+Option B — build via Compose, then tag and push:
+```
+# Build the api image as defined in compose
+docker compose build api
+
+# Find the local image name (commonly 'fastapi-project-api')
+docker images | grep fastapi-project
+
+# Tag it for Docker Hub
+docker tag fastapi-project-api <DOCKERHUB_USER>/fastapi-project:latest
+
+# Push
+docker push <DOCKERHUB_USER>/fastapi-project:latest
+```
+
+Notes
+
+- Ports: the API is published on `localhost:8000`.
+- Env propagation: Compose reads `.env`; Alembic uses `alembic.ini` + `alembic/env.py` which constructs the DB URL from `app.config.Settings`.
+- If the DB starts slowly and migrations fail at first boot, re-run `docker compose up` or use `docker compose logs -f postgres` to ensure readiness.
