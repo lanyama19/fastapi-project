@@ -160,9 +160,6 @@ Tips
 - posts: include vote counts; fix vote dependency in queries
 - docs: improve Ubuntu VM link rendering
 
-## License
-MIT (or your preferred license)
-
 ## Ubuntu VM Deployment
 - For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see:
   - [DEPLOYMENT.md](./DEPLOYMENT.md)
@@ -258,3 +255,6 @@ Notes
 - Ports: the API is published on `localhost:8000`.
 - Env propagation: Compose reads `.env`; Alembic uses `alembic.ini` + `alembic/env.py` which constructs the DB URL from `app.config.Settings`.
 - If the DB starts slowly and migrations fail at first boot, re-run `docker compose up` or use `docker compose logs -f postgres` to ensure readiness.
+
+## License
+MIT (or your preferred license)
