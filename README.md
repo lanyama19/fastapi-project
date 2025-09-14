@@ -90,6 +90,41 @@ uvicorn app.main:app --reload
 ```
 Docs: http://127.0.0.1:8000/docs
 
+## Testing
+
+- Prerequisites
+  - PostgreSQL running and reachable from your machine.
+  - A dedicated test database to avoid clobbering dev/prod data.
+  - Python virtual env activated: `python -m venv .venv` then `.venv\Scripts\Activate.ps1` (Windows) or `source .venv/bin/activate` (Unix/macOS).
+
+- Install pytest (if not installed):
+  - `pip install pytest`
+
+- Important notes
+  - The test suite uses the real PostgreSQL via the app's SQLAlchemy engine; it does NOT use SQLite or an in-memory DB.
+  - Running tests drops and recreates all tables before each test function. Point your `.env` to a throwaway test database.
+  - For local, non-Docker runs, the tests force `DATABASE_HOSTNAME=127.0.0.1` to avoid DNS issues with `localhost`/`postgres`.
+
+- Configure your `.env` (example):
+  - `database_hostname=127.0.0.1`
+  - `database_port=5432`
+  - `database_name=fastapi_test`
+  - `database_username=postgres`
+  - `database_password=yourpassword`
+  - `secret_key=devsecret`
+  - `algorithm=HS256`
+  - `access_token_expire_minutes=60`
+
+- Run tests
+  - Windows: `.venv\Scripts\python -m pytest -v`
+  - Unix/macOS: `pytest -v`
+
+- What’s covered
+  - Auth: root ping, login success, wrong password, unknown user.
+  - Users: create via fixtures, fetch by id, 404 on missing.
+  - Posts: list (published only), get-by-id, create, update/delete by owner, 403 for non-owner, 404 on missing, basic structure assertions including `votes` count.
+  - Votes: vote, duplicate vote conflict, unvote, unvote missing 404, nonexistent post 404, auth required.
+
 ## Deploy on Render (Backend)
 
 1) Create service
@@ -159,6 +194,7 @@ Tips
 - docs: add Docker setup/commands and Docker Hub push section
 - posts: include vote counts; fix vote dependency in queries
 - docs: improve Ubuntu VM link rendering
+- tests: add pytest suite (auth, users, posts, vote); fix SQLAlchemy and datetime warnings
 
 ## Ubuntu VM Deployment
 - For instructions on configuring this app on an Ubuntu 22.04 VM (GCP), see:
