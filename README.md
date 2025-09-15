@@ -13,6 +13,8 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 - Uvicorn: ASGI server
 - Docker & Docker Compose: local dev and packaging
 - Render: optional deployment target (Web Service)
+- Pytest: for running automated tests.
+- Github Actions: for CI/CD.
 
 ## Features
 - Auth: OAuth2 password flow + JWT (login returns an access token)
@@ -23,6 +25,7 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 - CORS: permissive defaults for easy local testing
 - Migrations: Alembic runs automatically at container start to ensure tables exist
 - Dockerized dev: `docker compose up --build` to start API + Postgres
+- CI/CD: Automated testing and deployment using Github Actions.
 
 ## Project Structure
 ```
@@ -43,6 +46,13 @@ alembic/
   env.py
   script.py.mako
   versions/
+tests/
+  conftest.py
+  test_posts.py
+  ...
+.github/
+  workflows/
+    build-deploy.yml
 README.md
 requirements.txt
 alembic.ini
@@ -291,6 +301,15 @@ Notes
 - Ports: the API is published on `localhost:8000`.
 - Env propagation: Compose reads `.env`; Alembic uses `alembic.ini` + `alembic/env.py` which constructs the DB URL from `app.config.Settings`.
 - If the DB starts slowly and migrations fail at first boot, re-run `docker compose up` or use `docker compose logs -f postgres` to ensure readiness.
+
+## Pytest
+To run the tests, use the following command:
+```
+pytest -v
+```
+
+## Github Action CI/CD
+This project uses Github Actions for CI/CD. The workflow is defined in `.github/workflows/build-deploy.yml`. It will automatically build and test the project on every push to the main branch.
 
 ## License
 MIT (or your preferred license)
