@@ -138,7 +138,23 @@ jobs:
           "${VENV_DIR}/bin/pip" install --upgrade pip
           "${VENV_DIR}/bin/pip" install -r "${APP_DIR}/requirements.txt"
 
-          echo "[deploy] Running Alembic migrations"
+          echo "[deploy] Loading environment and running Alembic migrations"
+          # Load production env so pydantic-settings finds required variables
+          if [ -f "/home/frank2025/.env" ]; then
+            set -o allexport
+            # shellcheck disable=SC1091
+            . "/home/frank2025/.env"
+            set +o allexport
+          elif [ -f "${APP_DIR}/.env" ]; then
+            # Fallback to project .env (e.g., if you maintain it here)
+            set -o allexport
+            # shellcheck disable=SC1091
+            . "${APP_DIR}/.env"
+            set +o allexport
+          else
+            echo "[deploy][warn] No .env found at /home/frank2025/.env or ${APP_DIR}/.env; Alembic may fail" >&2
+          fi
+
           cd "${APP_DIR}"
           "${VENV_DIR}/bin/alembic" -c alembic.ini upgrade head
 
