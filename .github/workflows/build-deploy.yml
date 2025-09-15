@@ -161,8 +161,17 @@ jobs:
           "${VENV_DIR}/bin/alembic" -c alembic.ini upgrade head
 
           echo "[deploy] Restarting systemd service: fastapi"
-          sudo systemctl restart fastapi
-          sudo systemctl is-active --quiet fastapi && echo "[deploy] fastapi is active" || (echo "[deploy] fastapi failed to start" && sudo journalctl -u fastapi --no-pager -n 200 && exit 1)
+          SYS=$(command -v systemctl)
+          JRN=$(command -v journalctl)
+          # Use full paths with sudo -n to match sudoers NOPASSWD rules and avoid password prompts
+          sudo -n "$SYS" restart fastapi
+          if sudo -n "$SYS" is-active --quiet fastapi; then
+            echo "[deploy] fastapi is active"
+          else
+            echo "[deploy] fastapi failed to start"
+            sudo -n "$JRN" -u fastapi --no-pager -n 200 || true
+            exit 1
+          fi
 
           echo "[deploy] Optionally pulling Docker image if Docker is available"
           if command -v docker >/dev/null 2>&1; then
