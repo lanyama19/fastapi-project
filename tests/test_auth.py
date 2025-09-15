@@ -1,4 +1,5 @@
 from fastapi import status
+from app.schemas import Token
 
 
 def test_root_ok(client):
@@ -15,8 +16,9 @@ def test_login_success(client, test_user):
     }
     res = client.post("/login", data=form)
     assert res.status_code == status.HTTP_200_OK
-    data = res.json()
-    assert "access_token" in data and data.get("token_type") == "bearer"
+    token = Token.model_validate(res.json())
+    assert isinstance(token.access_token, str) and token.access_token
+    assert token.token_type == "bearer"
 
 
 def test_login_wrong_password(client, test_user):
@@ -29,4 +31,3 @@ def test_login_nonexistent_user(client):
     form = {"username": "nouser@example.com", "password": "secret"}
     res = client.post("/login", data=form)
     assert res.status_code == status.HTTP_403_FORBIDDEN
-
