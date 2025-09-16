@@ -48,7 +48,7 @@ def client(session) -> Generator[TestClient, None, None]:
 @pytest.fixture()
 def test_user(client):
     payload = {"email": "user1@example.com", "password": "secret"}
-    res = client.post("/users/", json=payload)
+    res = client.post("/v1/users/", json=payload)
     assert res.status_code == 201, res.text
     data = res.json()
     return {"user": data, "plain_password": payload["password"]}
@@ -57,7 +57,7 @@ def test_user(client):
 @pytest.fixture()
 def test_user2(client):
     payload = {"email": "user2@example.com", "password": "secret2"}
-    res = client.post("/users/", json=payload)
+    res = client.post("/v1/users/", json=payload)
     assert res.status_code == 201, res.text
     data = res.json()
     return {"user": data, "plain_password": payload["password"]}
@@ -70,7 +70,7 @@ def token(client, test_user):
         "username": test_user["user"]["email"],
         "password": test_user["plain_password"],
     }
-    res = client.post("/login", data=form)
+    res = client.post("/v1/auth/login", data=form)
     assert res.status_code == 200, res.text
     return res.json()["access_token"]
 
@@ -90,7 +90,7 @@ def test_posts(authorized_client, test_user, test_user2):
     ]
     created = []
     for p in posts_payload:
-        res = authorized_client.post("/posts/", json=p)
+        res = authorized_client.post("/v1/posts/", json=p)
         assert res.status_code == 201, res.text
         created.append(res.json())
     return created

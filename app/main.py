@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from . import models
-from .database import engine
-from .routers import post, user, auth, vote
+from app import models
+from app.database import engine
+from app.v1.routers import post as v1_post, user as v1_user, auth as v1_auth, vote as v1_vote
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -21,10 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(post.router)
-app.include_router(user.router)
-app.include_router(auth.router)
-app.include_router(vote.router)
+app.include_router(v1_post.router)
+app.include_router(v1_user.router)
+app.include_router(v1_auth.router)
+app.include_router(v1_vote.router)
 
 
 @app.get("/")

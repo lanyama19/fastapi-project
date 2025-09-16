@@ -1,13 +1,13 @@
-from .. import models, schemas, oauth2
-from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
+from app import models, schemas, oauth2
+from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from ..database import get_db
+from app.database import get_db
 from typing import List, Optional
 
 
 router = APIRouter(
-    prefix="/posts",
+    prefix="/v1/posts",
     tags=['Posts']
 )
 
