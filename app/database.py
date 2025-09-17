@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 import psycopg
@@ -11,23 +12,39 @@ _host = settings.database_hostname.strip() if isinstance(settings.database_hostn
 if _host.lower() == "localhost":
     _host = "127.0.0.1"
 
+# Synchronous (v1) database setup
 SQLALCHEMY_DATABASE_URL = (
     f"postgresql+psycopg://{settings.database_username}:{settings.database_password}@"
     f"{_host}:{settings.database_port}/{settings.database_name}"
 )
-
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit = False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Asynchronous (v2) database setup
+ASYNC_SQLALCHEMY_DATABASE_URL = (
+    f"postgresql+asyncpg://{settings.database_username}:{settings.database_password}@"
+    f"{_host}:{settings.database_port}/{settings.database_name}"
+)
+async_engine = create_async_engine(ASYNC_SQLALCHEMY_DATABASE_URL)
+AsyncSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=async_engine)
+
 Base = declarative_base()
 
 
-# Dependency
+# Dependency for synchronous (v1) sessions
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+# Dependency for asynchronous (v2) sessions
+async def get_async_db():
+    async with AsyncSessionLocal() as db:
+        yield db
+
 
 # # Run native sql query using psycopg
 # while True:
