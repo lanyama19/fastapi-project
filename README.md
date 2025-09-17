@@ -17,46 +17,67 @@ FastAPI + SQLAlchemy + PostgreSQL demo API with JWT auth and vote aggregation. P
 - Github Actions: for CI/CD.
 
 ## Features
-- Auth: OAuth2 password flow + JWT (login returns an access token)
-- Users: register and fetch user
-- Posts: CRUD + search/pagination; only published posts listed
-- Votes: like/unlike via composite key (user_id, post_id)
-- Aggregation: `GET /posts` and `GET /posts/{id}` include a `votes` count
+- API versioning: `/v1` sync endpoints and `/v2` async endpoints with eager-loaded owners and vote totals
+- Auth: OAuth2 password flow + JWT access tokens
+- Users: register and fetch user records
+- Posts: CRUD plus search/pagination; `/v2/posts` returns published posts with owner + votes
+- Votes: like/unlike via composite key (`user_id`, `post_id`)
+- Aggregation: list and detail endpoints expose total votes
+- Testing: pytest suites for both `tests/` (sync) and `tests_v2/` (async)
 - CORS: permissive defaults for easy local testing
-- Migrations: Alembic runs automatically at container start to ensure tables exist
-- Dockerized dev: `docker compose up --build` to start API + Postgres
-- CI/CD: Automated testing and deployment using Github Actions.
+- Migrations: Alembic auto-runs at container start to ensure tables exist
+- Dockerized dev: `docker compose up --build` brings up API + Postgres
+- CI/CD: Github Actions pipeline running tests and deployment steps
 
 ## Project Structure
 ```
 app/
   __init__.py
   main.py
-  models.py
+  config.py
   database.py
+  models.py
   schemas.py
   utils.py
-  config.py
-  routers/
-    post.py
-    user.py
-    auth.py
-    vote.py
+  v1/
+    routers/
+      auth.py
+      post.py
+      user.py
+      vote.py
+  v2/
+    routers/
+      auth.py
+      post.py
+      user.py
+      vote.py
 alembic/
   env.py
   script.py.mako
   versions/
+docs/
+  ci_cd_notes.md
+  CI-CD.md
+  codex_quickstart.md
+  optimization_async_guide.md
+  tests_v2_report.md
 tests/
   conftest.py
+  test_auth.py
   test_posts.py
-  ...
-.github/
-  workflows/
-    build-deploy.yml
-README.md
+  test_user.py
+  test_vote.py
+tests_v2/
+  conftest.py
+  test_auth_v2.py
+  test_posts_v2.py
+  test_user_v2.py
+  test_vote_v2.py
+pytest.ini
 requirements.txt
-alembic.ini
+README.md
 ```
+
 
 ## Data Models & Responses
 - PostWithVotes: `{ "post": Post, "votes": int }` used by posts list and detail responses
