@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
 from app import models, schemas, oauth2
@@ -14,7 +15,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.PostWithVotes])
 async def get_posts(
-    db: Session = Depends(get_async_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(oauth2.get_current_user),
     limit: int = 10,
     skip: int = 0,
@@ -41,7 +42,7 @@ async def get_posts(
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 async def create_post(
     post: schemas.PostCreate,
-    db: Session = Depends(get_async_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     new_post = models.Post(owner_id=current_user.id, **post.model_dump())
@@ -55,7 +56,7 @@ async def create_post(
 @router.get("/{id}", response_model=schemas.PostWithVotes)
 async def get_post(
     id: int,
-    db: Session = Depends(get_async_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     query = (
@@ -81,7 +82,7 @@ async def get_post(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     id: int,
-    db: Session = Depends(get_async_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     query = select(models.Post).where(models.Post.id == id)
@@ -104,7 +105,7 @@ async def delete_post(
 async def update_post(
     id: int,
     post: schemas.PostCreate,
-    db: Session = Depends(get_async_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     query = select(models.Post).where(models.Post.id == id)
