@@ -52,7 +52,7 @@ jobs:
           ALGORITHM: 'HS256'
           ACCESS_TOKEN_EXPIRE_MINUTES: '30'
         run: |
-          pytest -q
+          pytest tests_v2 -q
 
   build_and_push:
     name: CI - Build and Push Image
