@@ -1,4 +1,3 @@
-import os
 import bcrypt
 
 # Ensure passlib-bcrypt compatibility across versions
@@ -11,24 +10,13 @@ if not hasattr(bcrypt, '__about__'):
 from passlib.context import CryptContext
 
 
-def _resolve_rounds(default: int = 12) -> int:
-    value = os.getenv('BCRYPT_ROUNDS')
-    if not value:
-        return default
-    try:
-        rounds = int(value)
-    except ValueError:
-        return default
-    return max(4, rounds)
-
-
-_BCRYPT_ROUNDS = _resolve_rounds()
+BCRYPT_ROUNDS = 8
 
 # Set default hashing algorithm for password encrypt
 pwd_context = CryptContext(
     schemes=['bcrypt'],
     deprecated='auto',
-    bcrypt__rounds=_BCRYPT_ROUNDS,
+    bcrypt__rounds=BCRYPT_ROUNDS,
 )
 
 
