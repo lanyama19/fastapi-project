@@ -1,6 +1,4 @@
 import bcrypt
-from passlib.context import CryptContext
-
 
 # Ensure passlib-bcrypt compatibility across versions
 if not hasattr(bcrypt, '__about__'):
@@ -8,6 +6,9 @@ if not hasattr(bcrypt, '__about__'):
         __version__ = getattr(bcrypt, '__version__', 'unknown')
 
     bcrypt.__about__ = _BcryptAbout()
+
+from passlib.context import CryptContext
+
 
 # Set default hashing algorithm for password encrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
