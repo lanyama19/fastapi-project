@@ -208,3 +208,9 @@ __marimo__/
 
 .vscode/
 
+
+# Load testing artifacts
+loadtests/sim_res/
+loadtest_local.log
+loadtest_local_*.csv
+
