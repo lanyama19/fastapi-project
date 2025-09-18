@@ -15,7 +15,7 @@ router = APIRouter(
 async def vote(
     vote: schemas.Vote,
     db: AsyncSession = Depends(get_async_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(oauth2.get_current_user_async)
 ):
     post_query = select(models.Post).where(models.Post.id == vote.post_id)
     post_exists = (await db.execute(post_query)).scalar_one_or_none()
@@ -44,3 +44,4 @@ async def vote(
     await db.delete(found_vote)
     await db.commit()
     return {"message": "You just revoked the vote on this post"}
+
